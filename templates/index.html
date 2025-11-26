@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Video & Reels Downloader</title>
+    <style>
+        :root {
+            --bg: #050816;
+            --bg-alt: #0b1220;
+            --card: #020617;
+            --accent: #6366f1;
+            --accent-soft: rgba(99, 102, 241, 0.12);
+            --accent-strong: #4f46e5;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: rgba(148, 163, 184, 0.3);
+            --error: #f97373;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1d2536 0, #020617 55%, #000 100%);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .shell {
+            max-width: 960px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .title {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .title span {
+            background: linear-gradient(to right, #a855f7, #6366f1, #22c55e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            margin-top: 0.4rem;
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2.2fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 840px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #0f172a 0, #020617 65%);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+            padding: 1.4rem 1.5rem 1.4rem;
+            backdrop-filter: blur(18px);
+        }
+
+        .field-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .field-label strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .url-input {
+            position: relative;
+        }
+
+        .url-input input {
+            width: 100%;
+            border-radius: 0.9rem;
+            border: 1px solid var(--border);
+            padding: 0.8rem 0.9rem 0.8rem 2.4rem;
+            background: rgba(15, 23, 42, 0.82);
+            color: var(--text);
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease,
+                background 0.16s ease, transform 0.1s ease;
+        }
+
+        .url-input input::placeholder {
+            color: #6b7280;
+        }
+
+        .url-input input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.55);
+            background: rgba(15, 23, 42, 0.95);
+            transform: translateY(-1px);
+        }
+
+        .url-prefix {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.78rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .options-row {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
+        }
+
+        .select {
+            width: 100%;
+            border-radius: 0.9rem;
+            border: 1px solid var(--border);
+            padding: 0.65rem 0.85rem;
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease,
+                background 0.16s ease;
+        }
+
+        .select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+            background: rgba(15, 23, 42, 0.98);
+        }
+
+        .hint {
+            margin-top: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .platform-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-top: 0.4rem;
+        }
+
+        .tag {
+            font-size: 0.73rem;
+            padding: 0.18rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: radial-gradient(circle at top, #111827 0, #020617 80%);
+            color: var(--muted);
+        }
+
+        .tag strong {
+            color: var(--text);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1.3rem;
+        }
+
+        .primary-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 999px;
+            padding: 0.65rem 1.4rem;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.55);
+            transition: transform 0.1s ease, box-shadow 0.12s ease,
+                filter 0.12s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 32px rgba(79, 70, 229, 0.7);
+            filter: brightness(1.04);
+        }
+
+        .primary-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.6);
+            filter: brightness(0.96);
+        }
+
+        .primary-btn[disabled] {
+            cursor: default;
+            opacity: 0.6;
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .primary-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .status-chip {
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            color: var(--muted);
+        }
+
+        .status-chip strong {
+            color: var(--text);
+        }
+
+        .cancel-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.25rem;
+            padding: 0.25rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--muted);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        }
+
+        .cancel-btn:hover:not([disabled]) {
+            background: rgba(30, 64, 175, 0.45);
+            color: #e5e7eb;
+            border-color: rgba(129, 140, 248, 0.9);
+        }
+
+        .cancel-btn[disabled] {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .secondary {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .secondary a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .secondary a:hover {
+            text-decoration: underline;
+        }
+
+        .progress-wrapper {
+            margin-top: 0.9rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .progress-bar {
+            position: relative;
+            width: 100%;
+            height: 0.85rem;
+            border-radius: 999px;
+            overflow: hidden;
+            background: radial-gradient(circle at top, #020617 0, #030712 80%);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+
+        .progress-inner {
+            position: absolute;
+            inset: 0;
+            width: 0%;
+            background: linear-gradient(90deg, #4f46e5, #6366f1, #22c55e);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s linear infinite;
+            transform-origin: left center;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+        .progress-footer {
+            margin-top: 0.4rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pill {
+            padding: 0.18rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            font-size: 0.72rem;
+        }
+
+        .pill.success {
+            border-color: rgba(34, 197, 94, 0.7);
+            color: #bbf7d0;
+        }
+
+        .pill.error {
+            border-color: rgba(248, 113, 113, 0.8);
+            color: #fecaca;
+        }
+
+        .results {
+            margin-top: 1.2rem;
+            padding-top: 0.85rem;
+            border-top: 1px dashed rgba(148, 163, 184, 0.4);
+            font-size: 0.82rem;
+        }
+
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.35rem;
+            color: #a5b4fc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .download-link svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .download-link:hover {
+            color: #c7d2fe;
+        }
+
+        .side-card {
+            background: linear-gradient(145deg, #020617, #020617 30%, #0b1120 100%);
+            border-radius: 1.1rem;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            padding: 1.2rem 1.25rem 1.3rem;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
+        }
+
+        .side-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.9rem;
+        }
+
+        .side-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.18rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(22, 163, 74, 0.16);
+            color: #bbf7d0;
+            border: 1px solid rgba(34, 197, 94, 0.7);
+        }
+
+        .side-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .side-list li {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding: 0.3rem 0;
+        }
+
+        .side-list li span {
+            color: var(--accent);
+            font-size: 0.7rem;
+            margin-top: 0.05rem;
+        }
+
+        .side-footer {
+            margin-top: 0.8rem;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header class="header">
+            <div class="title">
+                <span>Universal Downloader</span>
+            </div>
+            <p class="subtitle">
+                Paste a YouTube video or playlist link, or any Instagram post / reel / story URL.
+                Choose quality, then track live progress until your file is ready.
+            </p>
+        </header>
+
+        <div class="grid">
+            <main class="card">
+                <form id="downloadForm" autocomplete="off">
+                    <div class="field-label">
+                        <strong>Content URL</strong>
+                        <span id="detectedPlatform">Auto-detects YouTube / Instagram</span>
+                    </div>
+                    <div class="url-input">
+                        <span class="url-prefix">URL</span>
+                        <input
+                            type="url"
+                            id="url"
+                            name="url"
+                            required
+                            placeholder="https://youtube.com/... or https://www.instagram.com/..."
+                        />
+                    </div>
+
+                    <div class="options-row">
+                        <div>
+                            <div class="field-label">
+                                <strong>Quality</strong>
+                                <span id="qualityLabel">Best available</span>
+                            </div>
+                            <select class="select" id="quality" name="quality">
+                                <option value="best" selected>Best (video + audio)</option>
+                                <option value="1080p">1080p (if available)</option>
+                                <option value="720p">720p</option>
+                                <option value="480p">480p</option>
+                                <option value="audio">Audio only (MP3)</option>
+                            </select>
+                            <div class="hint">
+                                For Instagram, we'll use the closest available quality.
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="field-label">
+                                <strong>Mode</strong>
+                                <span id="modeHint">Auto detect playlist</span>
+                            </div>
+                            <select class="select" id="mode" name="mode">
+                                <option value="auto" selected>Auto (video or playlist)</option>
+                                <option value="single">Single video / reel</option>
+                                <option value="playlist">Entire playlist</option>
+                            </select>
+                            <div class="hint">
+                                For YouTube playlists, choose <strong>Entire playlist</strong> to
+                                get a bundled ZIP.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="platform-tags">
+                        <span class="tag"><strong>YouTube</strong> videos &amp; playlists</span>
+                        <span class="tag"><strong>Instagram</strong> reels / posts / IGTV</span>
+                        <span class="tag">High quality MP4 / MP3 output</span>
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="primary-btn" id="submitBtn">
+                            <span id="submitLabel">Start Download</span>
+                            <svg viewBox="0 0 20 20" fill="none">
+                                <path
+                                    d="M4 10h8.5m0 0L9.5 7m3 3-3 3M10 3.5a6.5 6.5 0 1 1-5.813 3.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </button>
+                        <div>
+                            <div class="status-chip" id="statusChip">
+                                <strong>Status:</strong> Idle
+                            </div>
+                            <button type="button" class="cancel-btn" id="cancelBtn" disabled>
+                                Cancel download
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="progress-wrapper">
+                        <div class="progress-header">
+                            <span>Download progress</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-inner" id="progressInner"></div>
+                        </div>
+                        <div class="progress-footer">
+                            <span>
+                                <span id="progressText">Waiting for a job to start.</span><br />
+                                <span id="metricsText">
+                                    Size: — · Downloaded: — · Speed: — · ETA: —
+                                </span>
+                            </span>
+                            <span class="pill" id="pillState">Idle</span>
+                        </div>
+                    </div>
+
+                    <div class="results" id="results">
+                        <div id="resultMessage">
+                            When the download is finished, your file will appear here with a direct
+                            link.
+                        </div>
+                        <a href="#" id="downloadLink" class="download-link" style="display: none">
+                            <svg viewBox="0 0 20 20" fill="none">
+                                <path
+                                    d="M10 4v8m0 0 3-3m-3 3-3-3M4 14h12"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                            <span id="downloadFilename"></span>
+                        </a>
+                    </div>
+    </form>
+            </main>
+
+            <aside class="side-card">
+                <div class="side-header">
+                    <div class="side-title">How it works</div>
+                    <span class="badge">Live progress</span>
+                </div>
+                <ul class="side-list">
+                    <li>
+                        <span>1</span>
+                        Paste any YouTube or Instagram URL — we auto-detect if it's a
+                        single video, reel or playlist.
+                    </li>
+                    <li>
+                        <span>2</span>
+                        Pick the quality you want. For YouTube playlists you can download the
+                        entire list as a single ZIP.
+                    </li>
+                    <li>
+                        <span>3</span>
+                        We download in the background using a fast engine (yt-dlp) and update the
+                        progress bar in real time.
+                    </li>
+                    <li>
+                        <span>4</span>
+                        When it reaches 100%, click the link to save the file directly to your
+                        device.
+                    </li>
+                </ul>
+                <div class="side-footer">
+                    Tip: You can keep this tab open and queue another download as soon as one
+                    finishes.
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const form = document.getElementById("downloadForm");
+            const urlInput = document.getElementById("url");
+            const qualitySelect = document.getElementById("quality");
+            const modeSelect = document.getElementById("mode");
+            const statusChip = document.getElementById("statusChip");
+            const submitBtn = document.getElementById("submitBtn");
+            const submitLabel = document.getElementById("submitLabel");
+            const cancelBtn = document.getElementById("cancelBtn");
+            const progressInner = document.getElementById("progressInner");
+            const progressPercent = document.getElementById("progressPercent");
+            const progressText = document.getElementById("progressText");
+            const metricsText = document.getElementById("metricsText");
+            const pillState = document.getElementById("pillState");
+            const resultMessage = document.getElementById("resultMessage");
+            const downloadLink = document.getElementById("downloadLink");
+            const downloadFilename = document.getElementById("downloadFilename");
+            const detectedPlatform = document.getElementById("detectedPlatform");
+            const qualityLabel = document.getElementById("qualityLabel");
+            const modeHint = document.getElementById("modeHint");
+
+            let pollingInterval = null;
+            let currentJobId = null;
+
+            function formatBytes(bytes) {
+                const b = typeof bytes === "number" ? bytes : Number(bytes);
+                if (!b || b <= 0 || Number.isNaN(b)) return "—";
+                const units = ["B", "KB", "MB", "GB", "TB"];
+                let val = b;
+                let idx = 0;
+                while (val >= 1024 && idx < units.length - 1) {
+                    val /= 1024;
+                    idx++;
+                }
+                const fixed = val >= 10 || idx === 0 ? val.toFixed(0) : val.toFixed(1);
+                return fixed + " " + units[idx];
+            }
+
+            function formatSpeed(speed) {
+                const s = typeof speed === "number" ? speed : Number(speed);
+                if (!s || s <= 0 || Number.isNaN(s)) return "—";
+                return formatBytes(s) + "/s";
+            }
+
+            function formatEta(seconds) {
+                const sec = typeof seconds === "number" ? seconds : Number(seconds);
+                if (!sec || sec <= 0 || Number.isNaN(sec)) return "—";
+                const total = Math.round(sec);
+                const m = Math.floor(total / 60);
+                const s = total % 60;
+                if (m === 0) return s + "s";
+                return m + "m " + s + "s";
+            }
+
+            function setProgress(value) {
+                const v = Math.max(0, Math.min(100, value || 0));
+                progressInner.style.width = v + "%";
+                progressPercent.textContent = Math.round(v) + "%";
+            }
+
+            function setStatus(status, message, stateKind) {
+                statusChip.innerHTML =
+                    "<strong>Status:</strong> " + (status || "Idle");
+                progressText.textContent =
+                    message || "Waiting for a job to start.";
+
+                pillState.textContent = status || "Idle";
+                pillState.classList.remove("success", "error");
+                if (stateKind === "success") {
+                    pillState.classList.add("success");
+                } else if (stateKind === "error") {
+                    pillState.classList.add("error");
+                }
+            }
+
+            function resetUI() {
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+                currentJobId = null;
+                setProgress(0);
+                setStatus("Idle", "Waiting for a job to start.");
+                metricsText.textContent =
+                    "Size: — · Downloaded: — · Speed: — · ETA: —";
+                resultMessage.textContent =
+                    "When the download is finished, your file will appear here with a direct link.";
+                downloadLink.style.display = "none";
+                downloadLink.href = "#";
+                downloadFilename.textContent = "";
+                cancelBtn.disabled = true;
+            }
+
+            function detectPlatformAndMode(url) {
+                const lower = (url || "").toLowerCase();
+                if (!lower) {
+                    detectedPlatform.textContent = "Auto-detects YouTube / Instagram";
+                    modeHint.textContent = "Auto detect playlist";
+                    return;
+                }
+
+                if (lower.includes("instagram.com")) {
+                    detectedPlatform.textContent = "Detected: Instagram";
+                    modeHint.textContent = "Instagram posts / reels are treated as single items";
+                    if (modeSelect.value === "playlist") {
+                        modeSelect.value = "single";
+                    }
+                } else if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
+                    detectedPlatform.textContent = "Detected: YouTube";
+                    if (lower.includes("list=") || lower.includes("playlist")) {
+                        modeHint.textContent = "Looks like a playlist URL";
+                        if (modeSelect.value === "single") {
+                            modeSelect.value = "playlist";
+                        }
+                    } else {
+                        modeHint.textContent = "Single video / shorts";
+                        if (modeSelect.value === "playlist") {
+                            modeSelect.value = "single";
+                        }
+                    }
+                } else {
+                    detectedPlatform.textContent = "Unknown platform – yt-dlp will try its best";
+                    modeHint.textContent = "Auto detect playlist";
+                }
+            }
+
+            urlInput.addEventListener("input", (e) => {
+                detectPlatformAndMode(e.target.value);
+            });
+
+            qualitySelect.addEventListener("change", () => {
+                const v = qualitySelect.value;
+                if (v === "best") {
+                    qualityLabel.textContent = "Best available";
+                } else if (v === "audio") {
+                    qualityLabel.textContent = "Audio only (MP3)";
+                } else {
+                    qualityLabel.textContent = v.toUpperCase();
+                }
+            });
+
+            cancelBtn.addEventListener("click", async (event) => {
+                event.preventDefault();
+                if (!currentJobId) return;
+
+                cancelBtn.disabled = true;
+                setStatus("Cancelling", "Requesting cancellation…");
+
+                try {
+                    await fetch("/api/cancel/" + currentJobId, {
+                        method: "POST",
+                    });
+                } catch (err) {
+                    // Even if the request fails, the worker may still stop via the flag;
+                    // progress polling will reflect the final state.
+                }
+            });
+
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const url = urlInput.value.trim();
+                if (!url) {
+                    urlInput.focus();
+                    return;
+                }
+
+                resetUI();
+
+                submitBtn.disabled = true;
+                submitLabel.textContent = "Starting…";
+                setStatus("Queued", "Preparing download job…");
+
+                try {
+                    const res = await fetch("/api/start_download", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            url,
+                            quality: qualitySelect.value,
+                            download_type: modeSelect.value,
+                        }),
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.job_id) {
+                        throw new Error(data.error || "Failed to start download");
+                    }
+
+                    const jobId = data.job_id;
+                    currentJobId = jobId;
+                    setStatus("Queued", "Job queued. Download will start shortly…");
+                    submitLabel.textContent = "Downloading…";
+                    cancelBtn.disabled = false;
+
+                    pollingInterval = setInterval(async () => {
+                        try {
+                            const r = await fetch("/api/progress/" + jobId);
+                            const j = await r.json();
+                            if (!r.ok) {
+                                throw new Error(j.error || "Failed to fetch progress");
+                            }
+
+                            const status = j.status || "unknown";
+                            const progress = typeof j.progress === "number" ? j.progress : 0;
+                            setProgress(progress);
+
+                            // Metrics
+                            metricsText.textContent =
+                                "Size: " +
+                                formatBytes(j.total_bytes) +
+                                " · Downloaded: " +
+                                formatBytes(j.downloaded_bytes) +
+                                " · Speed: " +
+                                formatSpeed(j.speed) +
+                                " · ETA: " +
+                                formatEta(j.eta);
+
+                            if (status === "queued" || status === "starting") {
+                                setStatus("Starting", "Preparing your download…");
+                            } else if (status === "downloading") {
+                                setStatus("Downloading", "Your content is being downloaded…");
+                            } else if (status === "processing") {
+                                setStatus(
+                                    "Processing",
+                                    "Download finished; finalizing the file (merge/compress)…"
+                                );
+                            } else if (status === "completed") {
+                                clearInterval(pollingInterval);
+                                pollingInterval = null;
+                                setStatus("Completed", "Download is ready!", "success");
+                                submitLabel.textContent = "Start Download";
+                                submitBtn.disabled = false;
+                                cancelBtn.disabled = true;
+
+                                if (j.filename && j.download_url) {
+                                    resultMessage.textContent =
+                                        "Your file is ready. Click below to save it to your device.";
+                                    downloadFilename.textContent = j.filename;
+                                    downloadLink.href = j.download_url;
+                                    downloadLink.style.display = "inline-flex";
+                                } else {
+                                    resultMessage.textContent =
+                                        "Download finished, but no file name was returned.";
+                                }
+                                return;
+                            } else if (status === "cancelled") {
+                                clearInterval(pollingInterval);
+                                pollingInterval = null;
+                                setStatus("Cancelled", "Download was cancelled by you.", "error");
+                                submitLabel.textContent = "Start Download";
+                                submitBtn.disabled = false;
+                                cancelBtn.disabled = true;
+                                return;
+                            } else if (status === "error") {
+                                clearInterval(pollingInterval);
+                                pollingInterval = null;
+                                const errMsg = j.error || "Unknown error.";
+                                setStatus("Error", errMsg, "error");
+                                resultMessage.textContent = errMsg;
+                                submitLabel.textContent = "Start Download";
+                                submitBtn.disabled = false;
+                                cancelBtn.disabled = true;
+                                return;
+                            }
+                        } catch (err) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                            setStatus("Error", err.message || "Unexpected error", "error");
+                            resultMessage.textContent =
+                                err.message || "Unexpected error while checking progress.";
+                            submitLabel.textContent = "Start Download";
+                            submitBtn.disabled = false;
+                            cancelBtn.disabled = true;
+                        }
+                    }, 1200);
+                } catch (error) {
+                    setStatus("Error", error.message || "Could not start download", "error");
+                    resultMessage.textContent =
+                        error.message || "Could not start download. Please try again.";
+                    submitLabel.textContent = "Start Download";
+                    submitBtn.disabled = false;
+                    cancelBtn.disabled = true;
+                }
+            });
+
+            // Initial UI
+            resetUI();
+            detectPlatformAndMode("");
+        })();
+    </script>
+</body>
+</html>
+

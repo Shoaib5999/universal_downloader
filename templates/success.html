@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Successful</title>
+</head>
+<body>
+    <h1>Download Successful!</h1>
+    <p>Your video <strong>{{ filename }}</strong> has been downloaded to the server.</p>
+    <a href="{{ url_for('download_file', filename=filename) }}">Click here to download to your device</a>
+    <br><br>
+    <a href="{{ url_for('index') }}">Download another video</a>
+</body>
+</html>
+
