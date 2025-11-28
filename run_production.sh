@@ -7,6 +7,15 @@
 
 set -e
 
+# Always run from the directory where this script lives
+cd "$(dirname "$0")"
+
+# Activate the virtual environment so we use the right Python + packages
+if [ -d "venv" ]; then
+  # shellcheck disable=SC1091
+  . "venv/bin/activate"
+fi
+
 export FLASK_APP=app.py
 
 # Bind on all interfaces, port 8000 (change if needed)
