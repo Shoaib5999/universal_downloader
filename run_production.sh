@@ -10,7 +10,10 @@ set -e
 export FLASK_APP=app.py
 
 # Bind on all interfaces, port 8000 (change if needed)
-exec gunicorn -w 2 -b 0.0.0.0:8000 'app:app'
+# IMPORTANT: use a single worker so in-memory DOWNLOAD_JOBS dictionary and
+# download threads are shared by all requests. Multiple workers would each
+# have their own copy and cause "Invalid job id" issues.
+exec gunicorn -w 1 -b 0.0.0.0:8000 'app:app'
 
 
 
