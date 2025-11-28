@@ -19,6 +19,12 @@ os.makedirs(template_dir, exist_ok=True)
 os.makedirs(static_dir, exist_ok=True)
 os.makedirs(downloads_dir, exist_ok=True)
 
+# Path to a cookies.txt file for authenticated downloads (e.g. YouTube)
+# Place your exported Netscape-format cookies file as "cookies.txt"
+# in the same directory as app.py (or adjust this path if you prefer
+# a different location).
+COOKIES_FILE = os.path.join(base_dir, "cookies.txt")
+
 # In-memory job store for tracking download progress
 DOWNLOAD_JOBS = {}
 JOB_CLEANUP_SECONDS = 60 * 60  # 1 hour
@@ -166,6 +172,10 @@ def download_worker(job_id: str):
         "progress_hooks": [progress_hook_for(job_id)],
         "postprocessors": postprocessors,
     }
+
+    # If the cookies file exists, use it for authenticated requests (e.g. YouTube)
+    if os.path.isfile(COOKIES_FILE):
+        ydl_opts["cookiefile"] = COOKIES_FILE
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
