@@ -6,6 +6,7 @@ import uuid
 import time
 import zipfile
 import re
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
@@ -24,6 +25,11 @@ os.makedirs(downloads_dir, exist_ok=True)
 # in the same directory as app.py (or adjust this path if you prefer
 # a different location).
 COOKIES_FILE = os.path.join(base_dir, "cookies.txt")
+
+# Optional: a dedicated cookies file for Instagram downloads.
+# We've created "cookies_instagram.txt" from your Instagram export so that
+# Instagram-specific cookies don't conflict with other sites.
+INSTAGRAM_COOKIES_FILE = os.path.join(base_dir, "cookies_instagram.txt")
 
 # In-memory job store for tracking download progress
 DOWNLOAD_JOBS = {}
@@ -163,6 +169,15 @@ def download_worker(job_id: str):
 
     fmt, postprocessors = build_format_and_postprocessors(quality)
 
+    # Detect if this is an Instagram URL so we can use the dedicated cookie file.
+    is_instagram = False
+    try:
+        parsed = urlparse(url)
+        if "instagram.com" in (parsed.netloc or ""):
+            is_instagram = True
+    except Exception:
+        pass
+
     # Common yt-dlp options
     ydl_opts = {
         "outtmpl": os.path.join(downloads_dir, "%(title)s.%(ext)s"),
@@ -173,9 +188,17 @@ def download_worker(job_id: str):
         "postprocessors": postprocessors,
     }
 
-    # If the cookies file exists, use it for authenticated requests (e.g. YouTube)
-    if os.path.isfile(COOKIES_FILE):
-        ydl_opts["cookiefile"] = COOKIES_FILE
+    # Choose the appropriate cookies file:
+    # - For Instagram links, prefer the Instagram-specific cookies file.
+    # - Otherwise, fall back to the general cookies.txt file if present.
+    cookiefile = None
+    if is_instagram and os.path.isfile(INSTAGRAM_COOKIES_FILE):
+        cookiefile = INSTAGRAM_COOKIES_FILE
+    elif os.path.isfile(COOKIES_FILE):
+        cookiefile = COOKIES_FILE
+
+    if cookiefile:
+        ydl_opts["cookiefile"] = cookiefile
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
